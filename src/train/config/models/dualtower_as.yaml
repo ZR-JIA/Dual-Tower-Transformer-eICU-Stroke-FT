@@ -1,0 +1,103 @@
+# ==============================================================================
+# DualTower + Adaptive Safeguard Mechanism 3 (dualtower_as)
+# ==============================================================================
+# Left Tower:  Categorical embeddings — identical to dualtower.yaml
+# Right Tower: Transformer + LearnableSoftNorm (Mechanism 3)
+#              Mean pooling (same as dualtower, NOT CLS)
+# Fusion:      Concatenation + MLP — identical to dualtower.yaml
+#
+# Ablation role: isolates contribution of Mechanism 3 (M3) on the base DT.
+#   dualtower      → 0.6171 ± 0.0058  (baseline, no M3)
+#   dualtower_as   → TBD             (base DT + M3, this config)
+#   dualtower_ft   → 0.6245 ± 0.0015  (CLS token, no M3)
+#
+# All hyperparameters identical to dualtower.yaml for fair comparison.
+# ==============================================================================
+
+model_config:
+  model: dualtower_as
+
+  # Architecture
+  architecture:
+    # Right Tower: Transformer + LearnableSoftNorm (M3), mean pooling
+    trans_d_model: 64
+    trans_nhead: 4
+    trans_num_layers: 2
+
+    # Left Tower: Categorical Embeddings (identical to dualtower.yaml)
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 16
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 2
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 4
+
+    # Fusion Layer (identical to dualtower.yaml)
+    fusion_hidden_dim: 64
+    dropout: 0.15
+
+  # Loss function (identical to dualtower.yaml)
+  loss:
+    type: bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer (identical to dualtower.yaml)
+  optimizer:
+    name: adamw
+    lr: 5e-4
+    weight_decay: 3e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Learning rate scheduler (identical to dualtower.yaml)
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop (identical to dualtower.yaml)
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Model initialization
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration post-training
+  calibration_after_fit: true
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    rounds: 50

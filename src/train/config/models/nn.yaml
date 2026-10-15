@@ -1,0 +1,75 @@
+# ==============================================================================
+# NN (Simple Neural Network)
+# ==============================================================================
+
+model_config:
+  model: nn
+  
+  # Architecture
+  architecture:
+    hidden_dim: 128                # Hidden layer dimension
+    dropout: 0.3                   # Dropout rate
+  
+  # Loss function
+  loss:
+    type: bce                      # bce, focal, label_smoothing
+    pos_weight: "${class_imbalance.pos_weight}"
+    
+    # Focal loss parameters (if type=focal)
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+    
+    # Label smoothing (if type=label_smoothing)
+    label_smoothing:
+      smoothing: 0.1
+  
+  # Optimizer
+  optimizer:
+    name: adam
+    lr: 1e-3
+    weight_decay: 1e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+  
+  # Learning rate scheduler
+  scheduler:
+    name: step                     # cosine, step, plateau, exponential, onecycle
+    warmup_epochs: 0
+    
+    # Step LR parameters
+    step:
+      step_size: 20
+      gamma: 0.5
+    
+    # Cosine annealing parameters
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+    
+    # ReduceLROnPlateau parameters
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+  
+  # Training loop specifics
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+  
+  # Model initialization
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+  
+  # Calibration post-training
+  calibration_after_fit: true
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    rounds: 50

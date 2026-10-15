@@ -1,0 +1,118 @@
+# ==============================================================================
+# DualTower-FT with Large Tower Embeddings (DT-FT-LTE)
+# ==============================================================================
+# Base: dualtower_ft.yaml (FT-Transformer CLS right tower)
+# Change: categorical embedding dims significantly increased
+#
+# Motivation:
+#   In dualtower_ft.yaml the left tower outputs only 22 dims total:
+#     age(16) + gender(2) + ethnicity(4) = 22
+#   The fusion input is [22 | 64] = 86 dims, where demographics occupy only 26%.
+#   XGBoost uses raw feature values for all splits — age, gender, ethnicity
+#   receive the same weight as any numerical feature. In contrast, the 2-dim
+#   gender embedding can barely encode any signal, and the 4-dim ethnicity
+#   embedding is similarly bottlenecked.
+#
+#   Additionally, gender and age carry ordinal / semantic richness that a 2-dim
+#   vector cannot represent. Increasing embedding dims to match d_model (64)
+#   gives the left tower capacity comparable to the right tower's CLS output:
+#     age(64) + gender(16) + ethnicity(32) = 112
+#   Fusion input becomes [112 | 64] = 176 dims, demographics occupy 64%.
+#
+#   This also enables a meaningful DT-DC-v2 (cross-attention now has 16-64 dim
+#   keys instead of 2-4 dim, avoiding degenerate uniform attention).
+#
+# Key changes vs dualtower_ft.yaml:
+#   age emb_dim:       16 → 64
+#   gender emb_dim:     2 → 16
+#   ethnicity emb_dim:  4 → 32
+#   Total left output: 22 → 112 dims
+#   fusion_hidden_dim: 64 → 128  (scaled up to handle wider fusion input)
+#
+# All other hyperparameters are identical to dualtower_ft.yaml
+# ==============================================================================
+
+model_config:
+  model: dualtower_ft
+
+  # Architecture — KEY CHANGES: embedding dims + fusion hidden
+  architecture:
+    trans_d_model: 64
+    trans_nhead: 4
+    trans_num_layers: 2
+
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 64        # ← 16 → 64: matches d_model, preserves semantic richness
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 16        # ← 2 → 16: 2-dim was near-useless
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 32        # ← 4 → 32: 50 classes need more than 4 dims
+
+    fusion_hidden_dim: 128  # ← 64 → 128: scaled to handle wider 176-dim fusion input
+    dropout: 0.15
+
+  # Loss function (unchanged from dualtower_ft.yaml)
+  loss:
+    type: bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer (unchanged)
+  optimizer:
+    name: adamw
+    lr: 5e-4
+    weight_decay: 3e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Scheduler (unchanged)
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop (unchanged)
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Initialization (unchanged)
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration (unchanged)
+  calibration_after_fit: true
+
+  # Early stopping (unchanged)
+  early_stopping:
+    enabled: true
+    rounds: 50

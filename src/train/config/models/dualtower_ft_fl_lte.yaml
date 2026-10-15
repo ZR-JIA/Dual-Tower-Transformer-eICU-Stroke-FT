@@ -1,0 +1,115 @@
+# ==============================================================================
+# DualTower-FT with Focal Loss + Large Tower Embeddings (DT-FT-FL-LTE)
+# ==============================================================================
+# Base: dualtower_ft.yaml (FT-Transformer CLS right tower)
+# Changes: focal loss (FL) + large categorical embeddings (LTE) combined
+#
+# Individual ablation results (5-seed):
+#   DT-FT (baseline):  0.6245 ± 0.0015
+#   DT-FT-FL  (focal): 0.6247 ± 0.0014  (+0.0002pp, both individually positive)
+#   DT-FT-LTE (emb):   0.6247 ± 0.0014  (+0.0002pp)
+#   DT-FT-FL-LTE:      [PENDING]
+#
+# Hypothesis: if FL and LTE are orthogonal improvements, their combined effect
+# should be additive (~+0.0004pp). Non-additive synergy also possible if larger
+# demographic embeddings provide richer gradients for focal loss to focus on.
+#
+# Key changes vs dualtower_ft.yaml:
+#   loss.type:         bce → focal
+#   age emb_dim:        16 → 64
+#   gender emb_dim:      2 → 16
+#   ethnicity emb_dim:   4 → 32
+#   Total left output:  22 → 112 dims
+#   fusion_hidden_dim:  64 → 128
+#
+# References:
+#   Lin et al. (2017). Focal Loss for Dense Object Detection. ICCV.
+#     DOI: 10.1109/ICCV.2017.324
+#   Gorishniy et al. (2021). Revisiting Deep Learning for Tabular Data.
+#     DOI: 10.48550/arXiv.2106.11959
+# ==============================================================================
+
+model_config:
+  model: dualtower_ft
+
+  # Architecture — large embeddings (from DT-FT-LTE)
+  architecture:
+    trans_d_model: 64
+    trans_nhead: 4
+    trans_num_layers: 2
+
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 64        # ← 16 → 64
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 16        # ← 2 → 16
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 32        # ← 4 → 32
+
+    fusion_hidden_dim: 128  # ← 64 → 128 (scaled for 176-dim fusion input)
+    dropout: 0.15
+
+  # Loss — focal (from DT-FT-FL)
+  loss:
+    type: focal            # ← bce → focal
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer (unchanged)
+  optimizer:
+    name: adamw
+    lr: 5e-4
+    weight_decay: 3e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Scheduler (unchanged)
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop (unchanged)
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Initialization (unchanged)
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration (unchanged)
+  calibration_after_fit: true
+
+  # Early stopping (unchanged)
+  early_stopping:
+    enabled: true
+    rounds: 50

@@ -1,0 +1,49 @@
+# ==============================================================================
+# DATA CONFIGURATION
+# Dataset paths, splits, preprocessing, and data loading settings
+# ==============================================================================
+
+data:
+  # Data source (inherits from global paths)
+  train_ready_root: "${paths.train_ready_root}"
+  
+  # Split files
+  splits:
+    train: train_patient_stratified.csv
+    val: val_patient_stratified.csv
+    test: test_patient_stratified.csv
+  
+  # Feature preprocessing
+  features:
+    # Columns to drop (non-features)
+    drop_cols:
+      - patient_id
+      - hospital_id
+      - unit_id
+    
+    # Columns to exclude from StandardScaler (preserved as raw integers for embeddings)
+    # no_scale_cols:
+    #   - gender
+    #   - ethnicity
+    #   - source_mimic
+    
+    # Standardization
+    standardize: true
+    
+    # Missing value imputation
+    numeric_impute: median  # Options: median, mean, zero
+    
+    # Outlier handling
+    clip:
+      enabled: false
+      p_low: 0.001
+      p_high: 0.999
+  
+  # Data loader settings (for neural models)
+  loader:
+    batch_size: 512
+    num_workers: "${resources.num_workers}"
+    pin_memory: "${resources.pin_memory}"
+    persistent_workers: "${resources.persistent_workers}"
+    shuffle_train: true
+    drop_last: false

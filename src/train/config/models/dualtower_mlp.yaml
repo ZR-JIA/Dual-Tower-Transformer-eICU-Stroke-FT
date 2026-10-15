@@ -1,0 +1,92 @@
+# ==============================================================================
+# DualTower MLP (DT-MLP) — Ablation variant
+# ==============================================================================
+# Left Tower: Categorical embeddings (Age, Gender, Ethnicity)
+# Right Tower: MLP for numerical vitals (replaces Transformer)
+
+model_config:
+  model: dualtower_mlp
+
+  # Architecture
+  architecture:
+    # Right Tower: MLP
+    right_tower_type: mlp
+    right_tower_hidden_dim: 256
+
+    # Left Tower: Categorical Embeddings (same as DT-Transformer)
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 16
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 2
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 4
+
+    # Fusion Layer
+    fusion_hidden_dim: 128
+    dropout: 0.5
+
+  # Loss function
+  loss:
+    type: bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer
+  optimizer:
+    name: adamw
+    lr: 8e-4
+    weight_decay: 1e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Learning rate scheduler
+  scheduler:
+    name: cosine
+    warmup_epochs: 3
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop specifics
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Model initialization
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration post-training
+  calibration_after_fit: true
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    rounds: 50

@@ -1,0 +1,148 @@
+{
+  "config": {
+    "model_dir": "outputs/final_model/DUALTOWER_FT_patient_stratified_seed42_auprc0623",
+    "data_path": "data/train_ready/test_patient_stratified.csv",
+    "rate": 0.01,
+    "injection_seed": 42,
+    "batch_size": 512,
+    "device": "cuda"
+  },
+  "feature_columns_used": {
+    "lab_BUN_mean": 39,
+    "sao2_mean": 8,
+    "lab_glucose_mean": 79,
+    "age": 0
+  },
+  "results": {
+    "baseline_sg_True": {
+      "crashes_pct": 0.0,
+      "nan_pred_pct": 0.0,
+      "auprc": 0.6234894253489408,
+      "latency_ms_mean": 35.63554063439369,
+      "latency_ms_std": 35.25947576061627,
+      "n_total": 2238,
+      "n_valid_preds": 2238,
+      "n_batches": 5,
+      "n_crashed_batches": 0,
+      "device_used": "cuda",
+      "safeguard_state": true
+    },
+    "baseline_sg_False": {
+      "crashes_pct": 100.0,
+      "nan_pred_pct": 100.0,
+      "auprc": null,
+      "latency_ms_mean": null,
+      "latency_ms_std": null,
+      "n_total": 2238,
+      "n_valid_preds": 0,
+      "n_batches": 5,
+      "n_crashed_batches": 5,
+      "device_used": "cpu",
+      "safeguard_state": false
+    },
+    "cat_oor_sg_True": {
+      "crashes_pct": 0.0,
+      "nan_pred_pct": 0.0,
+      "auprc": 0.6231058046127192,
+      "latency_ms_mean": 18.88251956552267,
+      "latency_ms_std": 5.379180429397835,
+      "n_total": 2238,
+      "n_valid_preds": 2238,
+      "n_batches": 5,
+      "n_crashed_batches": 0,
+      "device_used": "cuda",
+      "safeguard_state": true
+    },
+    "cat_oor_sg_False": {
+      "crashes_pct": 100.0,
+      "nan_pred_pct": 100.0,
+      "auprc": null,
+      "latency_ms_mean": null,
+      "latency_ms_std": null,
+      "n_total": 2238,
+      "n_valid_preds": 0,
+      "n_batches": 5,
+      "n_crashed_batches": 5,
+      "device_used": "cpu",
+      "safeguard_state": false
+    },
+    "num_extreme_sg_True": {
+      "crashes_pct": 0.0,
+      "nan_pred_pct": 0.0,
+      "auprc": 0.6237873958205244,
+      "latency_ms_mean": 18.87691281735897,
+      "latency_ms_std": 5.373844089387337,
+      "n_total": 2238,
+      "n_valid_preds": 2238,
+      "n_batches": 5,
+      "n_crashed_batches": 0,
+      "device_used": "cuda",
+      "safeguard_state": true
+    },
+    "num_extreme_sg_False": {
+      "crashes_pct": 100.0,
+      "nan_pred_pct": 100.0,
+      "auprc": null,
+      "latency_ms_mean": null,
+      "latency_ms_std": null,
+      "n_total": 2238,
+      "n_valid_preds": 0,
+      "n_batches": 5,
+      "n_crashed_batches": 5,
+      "device_used": "cpu",
+      "safeguard_state": false
+    },
+    "nan_inject_sg_True": {
+      "crashes_pct": 0.0,
+      "nan_pred_pct": 0.0,
+      "auprc": 0.6223894778279632,
+      "latency_ms_mean": 18.850678019225597,
+      "latency_ms_std": 5.3781580848966914,
+      "n_total": 2238,
+      "n_valid_preds": 2238,
+      "n_batches": 5,
+      "n_crashed_batches": 0,
+      "device_used": "cuda",
+      "safeguard_state": true
+    },
+    "nan_inject_sg_False": {
+      "crashes_pct": 100.0,
+      "nan_pred_pct": 100.0,
+      "auprc": null,
+      "latency_ms_mean": null,
+      "latency_ms_std": null,
+      "n_total": 2238,
+      "n_valid_preds": 0,
+      "n_batches": 5,
+      "n_crashed_batches": 5,
+      "device_used": "cpu",
+      "safeguard_state": false
+    },
+    "sentinel_sg_True": {
+      "crashes_pct": 0.0,
+      "nan_pred_pct": 0.0,
+      "auprc": 0.6242597803867745,
+      "latency_ms_mean": 18.66517663002014,
+      "latency_ms_std": 5.333256258730292,
+      "n_total": 2238,
+      "n_valid_preds": 2238,
+      "n_batches": 5,
+      "n_crashed_batches": 0,
+      "device_used": "cuda",
+      "safeguard_state": true
+    },
+    "sentinel_sg_False": {
+      "crashes_pct": 100.0,
+      "nan_pred_pct": 100.0,
+      "auprc": null,
+      "latency_ms_mean": null,
+      "latency_ms_std": null,
+      "n_total": 2238,
+      "n_valid_preds": 0,
+      "n_batches": 5,
+      "n_crashed_batches": 5,
+      "device_used": "cpu",
+      "safeguard_state": false
+    }
+  }
+}

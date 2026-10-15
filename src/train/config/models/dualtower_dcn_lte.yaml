@@ -1,0 +1,125 @@
+# ==============================================================================
+# DualTower-DC with Large Tower Embeddings (DT-DC-v2 / DT-DC-LTE)
+# ==============================================================================
+# Base: dualtower_dcn.yaml (DT-FT + demographic cross-attention per layer)
+# Change: categorical embedding dims increased to LTE scale
+#
+# Motivation:
+#   Original DT-DC (dualtower_dcn.yaml) failed: AUPRC 0.6196 +/- 0.0061
+#   Root cause: demographic embeddings too small for meaningful cross-attention keys
+#     gender: 2-dim  → Linear(2, 64) → key  (near-degenerate projection)
+#     ethnicity: 4-dim → Linear(4, 64) → key  (near-degenerate projection)
+#
+#   DT-FT-LTE confirmed that larger embeddings are beneficial on their own
+#   (0.6247 +/- 0.0014, +0.02pp vs DT-FT). With LTE-scale dims, cross-attention
+#   keys are now projected from 16/32-dim vectors instead of 2/4-dim — the
+#   original failure condition is eliminated, giving DT-DC a fair test.
+#
+# Key changes vs dualtower_dcn.yaml:
+#   age emb_dim:       16 → 64   (matches d_model)
+#   gender emb_dim:     2 → 16   (2-dim was near-useless as cross-attn key)
+#   ethnicity emb_dim:  4 → 32   (50 classes need more than 4 dims)
+#   fusion_hidden_dim: 64 → 128  (scaled for 176-dim fusion input)
+#
+# Expected outcome:
+#   Positive (> 0.6247): cross-attention concept validated, LTE was missing piece
+#   Neutral  (~0.6247):  large emb helps but cross-attn still adds no signal
+#   Negative (< 0.6245): cross-attention harmful even with proper embeddings
+#
+# Ablation chain:
+#   DT (mean pool) → DT-FT (+CLS) → DT-DC-v1 (+cross-attn, small emb, failed)
+#                                  → DT-DC-v2 (+cross-attn, large emb, this file)
+#
+# References:
+#   Vaswani et al. (2017) Attention Is All You Need. DOI: 10.48550/arXiv.1706.03762
+#   Gorishniy et al. (2021) FT-Transformer. DOI: 10.48550/arXiv.2106.11959
+# ==============================================================================
+
+model_config:
+  model: dualtower_dcn
+
+  # Architecture — LTE-scale embeddings + cross-attention
+  architecture:
+    # Right Tower: DCN (CLS token + cross-attention per layer, FFN 4x)
+    trans_d_model: 64
+    trans_nhead: 4
+    trans_num_layers: 2
+
+    # Left Tower: Large Tower Embeddings (from DT-FT-LTE)
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 64        # 16 → 64: matches d_model, meaningful cross-attn key
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 16        # 2 → 16: 2-dim was degenerate as cross-attn key
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 32        # 4 → 32: 50 classes need more than 4 dims
+
+    # Fusion Layer (scaled for 176-dim input: 112 left + 64 right)
+    fusion_hidden_dim: 128  # 64 → 128
+
+    dropout: 0.15
+
+  # Loss function (unchanged from dualtower_dcn.yaml)
+  loss:
+    type: bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer (unchanged)
+  optimizer:
+    name: adamw
+    lr: 5e-4
+    weight_decay: 3e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Scheduler (unchanged)
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop (unchanged)
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Initialization (unchanged)
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration (unchanged)
+  calibration_after_fit: true
+
+  # Early stopping (unchanged)
+  early_stopping:
+    enabled: true
+    rounds: 50

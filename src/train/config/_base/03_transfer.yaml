@@ -1,0 +1,38 @@
+# ==============================================================================
+# TRANSFER LEARNING CONFIGURATION (2-Stage Fine-Tuning)
+# ==============================================================================
+# Standard approach in medical AI transfer learning papers:
+#   Stage 1 (Pretrain):  Train on combined eICU + MIMIC data
+#   Stage 2 (Fine-tune): Fine-tune on eICU-only with lower LR
+#
+# Val/Test are always eICU-only (unchanged between stages).
+#
+# References:
+#   - Gupta et al. (2021): Transfer Learning for Clinical Time Series
+#   - Wardi et al. (2021): Predicting Progression to Septic Shock
+#   - Most eICU/MIMIC cross-dataset studies use this paradigm
+# ==============================================================================
+
+transfer:
+  enabled: false  # Set to true in run_two_stage_train.py
+
+  # Stage 1: Pretrain on combined (eICU + MIMIC)
+  stage1:
+    train_file: train_patient_stratified_combined.csv
+    max_epochs: 100            # Full training budget
+    description: "Pretrain on combined eICU+MIMIC"
+
+  # Stage 2: Fine-tune on eICU-only
+  stage2:
+    train_file: train_patient_stratified.csv
+    max_epochs: 30             # Shorter budget — early stopping will decide
+    lr_factor: 0.1             # Stage2 LR = Stage1 LR × lr_factor
+    weight_decay_factor: 1.0   # Keep same weight decay (set <1 to reduce)
+    warmup_epochs: 3           # Brief warmup to stabilise after LR drop
+    patience: 10               # Early stopping patience for Stage 2
+    description: "Fine-tune on eICU-only"
+
+    # Optional: freeze layers during fine-tuning
+    freeze:
+      enabled: false
+      patterns: []             # e.g. ["right_tower.transformer"] to freeze encoder

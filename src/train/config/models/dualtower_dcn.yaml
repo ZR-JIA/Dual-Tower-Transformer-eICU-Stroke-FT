@@ -1,0 +1,110 @@
+# ==============================================================================
+# DualTower with Demographic-Conditioned Numerical Attention (DT-DC)
+# ==============================================================================
+# Left Tower:  Categorical embeddings (Age, Gender, Ethnicity) — same as DT-FT
+# Right Tower: DCNRightTower — CLS token + cross-attention to demographic context
+# Fusion:      Concatenation + MLP — same as DT-FT
+#
+# Key change vs dualtower_ft.yaml:
+#   Each Transformer layer in the right tower adds cross-attention over the
+#   left tower's projected demographic embeddings, allowing clinical features
+#   to be processed in the context of patient demographics.
+#
+# Ablation chain:
+#   dualtower.yaml (mean pool) → dualtower_ft.yaml (+CLS) → dualtower_dcn.yaml (+cross-attn)
+#
+# Hyperparameters: identical to dualtower_ft.yaml for fair ablation comparison
+#
+# References:
+#   Vaswani et al. (2017) Attention Is All You Need. DOI: 10.48550/arXiv.1706.03762
+#   Gorishniy et al. (2021) FT-Transformer. DOI: 10.48550/arXiv.2106.11959
+#   Grinsztajn et al. (2022) Why trees outperform DL on tabular. DOI: 10.48550/arXiv.2207.08815
+# ==============================================================================
+
+model_config:
+  model: dualtower_dcn
+
+  # Architecture — identical to dualtower_ft.yaml for fair comparison
+  architecture:
+    # Right Tower: DCN (CLS token + cross-attention, FFN 4x)
+    trans_d_model: 64
+    trans_nhead: 4
+    trans_num_layers: 2
+
+    # Left Tower: Categorical Embeddings (unchanged)
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 16
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 2
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 4
+
+    # Fusion Layer (unchanged)
+    fusion_hidden_dim: 64
+    dropout: 0.15
+
+  # Loss function (identical to dualtower_ft.yaml)
+  loss:
+    type: bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer (identical to dualtower_ft.yaml)
+  optimizer:
+    name: adamw
+    lr: 5e-4
+    weight_decay: 3e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Learning rate scheduler (identical to dualtower_ft.yaml)
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop (identical to dualtower_ft.yaml)
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Model initialization
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration post-training
+  calibration_after_fit: true
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    rounds: 50

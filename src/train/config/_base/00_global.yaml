@@ -1,0 +1,97 @@
+# ==============================================================================
+# GLOBAL CONFIGURATION
+# Shared settings for all models: logging, reproducibility, resources, paths
+# ==============================================================================
+
+common:
+  # Project metadata
+  project: eICU_StrokeMortality
+  target_col: mortality
+  positive_label: 1
+
+  # Paths configuration
+  paths:
+    # Root paths (relative to project root)
+    project_root: "../.."  # From src/train/ to project root
+    data_root: "${common.paths.project_root}/data"
+    output_root: "${common.paths.project_root}/outputs"
+    
+    # Specific paths
+    train_ready_root: "${common.paths.data_root}/train_ready"
+    experiments: "${common.paths.output_root}/experiments"
+    final_models: "${common.paths.output_root}/final"
+    optuna_results: "${common.paths.output_root}/optuna"
+
+  # Logging configuration
+  logging:
+    level: INFO
+    save_jsonl: true        # Save structured logs as JSONL
+    save_csv: true          # Save metrics as CSV
+    track_git_hash: true    # Track git commit hash
+    track_config_hash: true # Track configuration hash
+    
+  # Reproducibility settings
+  reproducibility:
+    seed: 42
+    cudnn_deterministic: true
+    cudnn_benchmark: false
+    num_workers_seed: true
+
+  # Resource management
+  resources:
+    num_workers: 0          # DataLoader workers (0 to avoid deadlock)
+    prefetch_factor: null   # Not used when num_workers=0
+    pin_memory: true        # Pin memory for faster GPU transfer
+    persistent_workers: false
+
+  # Class imbalance handling
+  class_imbalance:
+    pos_weight: 6.13          # For NN/MLP/Transformer BCEWithLogitsLoss
+    scale_pos_weight: 6.13    # For XGBoost
+    class_weight: balanced_subsample  # For RandomForest
+
+  # Model promotion and selection criteria
+  promotion:
+    primary_metric: auprc     # Primary metric for model selection (auprc or auroc)
+    policy: best_on_val       # Policy: best_on_val or always_latest
+    min_improvement: 0.02     # Minimum improvement over baseline to promote
+
+  # Experiment tracking
+  tracking:
+    save_code_snapshot: true
+    save_environment: true    # Save pip freeze
+    save_system_info: true
+
+  # Cross-validation configuration (for future use)
+  cv:
+    folds: 5
+    stratify: true
+    group_col: patient_id     # Prevent patient leakage across folds
+    random_state: 42
+
+# Legacy top-level aliases for backward compatibility with ${paths.X} references
+paths:
+  project_root: "${common.paths.project_root}"
+  data_root: "${common.paths.data_root}"
+  output_root: "${common.paths.output_root}"
+  train_ready_root: "${common.paths.train_ready_root}"
+  experiments: "${common.paths.experiments}"
+  final_models: "${common.paths.final_models}"
+  optuna_results: "${common.paths.optuna_results}"
+
+reproducibility:
+  seed: "${common.reproducibility.seed}"
+  cudnn_deterministic: "${common.reproducibility.cudnn_deterministic}"
+  cudnn_benchmark: "${common.reproducibility.cudnn_benchmark}"
+  num_workers_seed: "${common.reproducibility.num_workers_seed}"
+
+resources:
+  num_workers: "${common.resources.num_workers}"
+  prefetch_factor: "${common.resources.prefetch_factor}"
+  pin_memory: "${common.resources.pin_memory}"
+  persistent_workers: "${common.resources.persistent_workers}"
+
+class_imbalance:
+  pos_weight: "${common.class_imbalance.pos_weight}"
+  scale_pos_weight: "${common.class_imbalance.scale_pos_weight}"
+  class_weight: "${common.class_imbalance.class_weight}"

@@ -1,0 +1,60 @@
+# ==============================================================================
+# XGBoost
+# ==============================================================================
+
+model_config:
+  model: xgboost
+  
+  # Core parameters
+  params:
+    # Tree structure
+    n_estimators: 1200
+    max_depth: 6
+    min_child_weight: 1
+    
+    # Learning
+    learning_rate: 0.03
+    
+    # Sampling
+    subsample: 0.8
+    colsample_bytree: 0.8
+    colsample_bylevel: 1.0
+    colsample_bynode: 1.0
+    
+    # Regularization
+    reg_lambda: 1.0                   # L2 regularization
+    reg_alpha: 0.0                    # L1 regularization
+    gamma: 0.0                        # Minimum loss reduction for split
+    
+    # Class imbalance
+    scale_pos_weight: "${class_imbalance.scale_pos_weight}"
+    
+    # Performance
+    tree_method: hist                 # hist, approx, exact, gpu_hist
+    max_bin: 256
+    grow_policy: depthwise            # depthwise, lossguide
+    
+    # Objective
+    objective: "binary:logistic"
+    eval_metric: auc
+    
+    # Other
+    random_state: "${reproducibility.seed}"
+    n_jobs: -1
+    verbosity: 1
+  
+  # Early stopping (internal to XGBoost)
+  early_stopping:
+    enabled: true
+    rounds: 50
+  
+  # Feature importance
+  feature_importance:
+    type: gain                        # Options: gain, weight, cover, total_gain, total_cover
+  
+  # Model-specific training settings
+  train_loop:
+    batch_size: null
+  
+  # Calibration
+  calibration_after_fit: true

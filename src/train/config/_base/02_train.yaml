@@ -1,0 +1,74 @@
+# ==============================================================================
+# TRAINING CONFIGURATION (Deep Learning Defaults)
+# Training loop settings, optimization, callbacks, and early stopping
+# Note: Tree-based models (XGBoost, RandomForest) may ignore some of these
+# ==============================================================================
+
+train:
+  # Training loop settings
+  training:
+    max_epochs: 100
+    
+    # Gradient clipping
+    gradient_clip:
+      enabled: true
+      norm: 1.0
+      algorithm: norm  # norm or value
+    
+    # Validation frequency
+    val_check_interval: 1.0  # Check after each epoch (1.0) or fraction
+    log_every_n_steps: 10
+    
+    # Mixed precision training (for neural networks)
+    mixed_precision:
+      enabled: false
+      dtype: float16  # float16 or bfloat16
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    metric: val/auprc        # Metric to monitor
+    mode: max                # max or min
+    patience: 10             # Number of epochs without improvement
+    min_delta: 0.0           # Minimum change to qualify as improvement
+    restore_best_weights: true
+  
+  # Checkpointing
+  checkpoint:
+    save_top_k: 1            # Number of best models to keep
+    monitor: val/auprc       # Metric to monitor
+    mode: max                # max or min
+    save_last: true          # Save last checkpoint
+    save_on_train_end: true
+    filename: 'epoch={epoch:03d}-val_auprc={val/auprc:.4f}'
+  
+  # Resource limits
+  limits:
+    max_time_hours: 24       # Maximum training time
+    max_memory_gb: 32        # Maximum memory usage
+    checkpoint_interval_hours: 2  # Save checkpoint every N hours
+  
+  # Parallel training
+  parallel:
+    num_workers: "${resources.num_workers}"
+    prefetch_factor: "${resources.prefetch_factor}"
+    pin_memory: "${resources.pin_memory}"
+    persistent_workers: "${resources.persistent_workers}"
+
+# Evaluation configuration
+eval:
+  # Threshold selection
+  threshold_selection:
+    method: youden  # Options: youden, max_f1, fixed_specificity@0.90
+  
+  # Calibration
+  calibration:
+    method: isotonic  # Options: isotonic, platt, none
+    enabled: false    # Enable by setting calibration_after_fit in model config
+  
+  # Bootstrap confidence intervals
+  bootstrap:
+    enabled: true
+    n_samples: 1000
+    alpha: 0.05  # For 95% CI
+    stratified: true

@@ -1,0 +1,114 @@
+# ==============================================================================
+# DualTower FT-Transformer — Optuna-Tuned Hyperparameters (DT-FT-Optuna)
+# ==============================================================================
+# Base architecture: dualtower_ft (identical model class)
+# Hyperparameters: best trial from 30-trial Optuna TPE search (2026-03-13)
+#
+# Optuna best AUPRC (50-epoch trial): 0.6938
+# Reference baseline dualtower_ft.yaml (default): 0.6245 ± 0.0015
+#
+# Key changes vs dualtower_ft.yaml:
+#   trans_d_model:    64  → 256   (×4 wider — biggest driver)
+#   trans_nhead:       4  → 8
+#   trans_num_layers:  2  → 1     (shallower; wider compensates)
+#   dropout:        0.15  → 0.075 (less regularization with wider model)
+#   fusion_hidden:    64  → 128
+#   lr:             5e-4  → 5.16e-4
+#   weight_decay:   3e-4  → 1.46e-4
+#
+# Usage (single run):
+#   python run_unified_train.py --model dualtower_ft \
+#          --config config/models/dualtower_ft_optuna.yaml
+#
+# Usage (5-seed):
+#   python run_multiple_seeds.py --model dualtower_ft --seeds 5 \
+#          --config config/models/dualtower_ft_optuna.yaml
+# ==============================================================================
+
+model_config:
+  model: dualtower_ft
+
+  # Architecture — Optuna best params
+  architecture:
+    # Right Tower: FT-Transformer (CLS token, FFN 4x)
+    trans_d_model: 256
+    trans_nhead: 8
+    trans_num_layers: 1
+
+    # Left Tower: Categorical Embeddings (unchanged from dualtower_ft.yaml)
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 16
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 2
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 4
+
+    # Fusion Layer — Optuna best params
+    fusion_hidden_dim: 128
+    dropout: 0.075
+
+  # Loss function (unchanged)
+  loss:
+    type: bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer — Optuna best params
+  optimizer:
+    name: adamw
+    lr: 5.16e-4
+    weight_decay: 1.46e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Learning rate scheduler (unchanged)
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop (unchanged)
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Model initialization (unchanged)
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration post-training (unchanged)
+  calibration_after_fit: true
+
+  # Early stopping (unchanged)
+  early_stopping:
+    enabled: true
+    rounds: 50

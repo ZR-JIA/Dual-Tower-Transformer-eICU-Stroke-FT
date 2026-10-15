@@ -1,0 +1,48 @@
+{
+  "models": [
+    "dualtower_ft"
+  ],
+  "seeds": [
+    42,
+    2024,
+    777,
+    9999,
+    12345
+  ],
+  "n_runs_per_model": 5,
+  "timestamp": "2026-03-27T19:20:08.144830",
+  "results": {
+    "dualtower_ft": [
+      {
+        "seed": 42,
+        "status": "failed",
+        "exit_code": 1,
+        "error": "Command '['/home/lab/miniconda3/bin/python', 'run_unified_train.py', '--model', 'dualtower_ft', '--seed', '42', '--config', 'config/models/dualtower_ft_lte.yaml']' returned non-zero exit status 1."
+      },
+      {
+        "seed": 2024,
+        "status": "failed",
+        "exit_code": 1,
+        "error": "Command '['/home/lab/miniconda3/bin/python', 'run_unified_train.py', '--model', 'dualtower_ft', '--seed', '2024', '--config', 'config/models/dualtower_ft_lte.yaml']' returned non-zero exit status 1."
+      },
+      {
+        "seed": 777,
+        "status": "failed",
+        "exit_code": 1,
+        "error": "Command '['/home/lab/miniconda3/bin/python', 'run_unified_train.py', '--model', 'dualtower_ft', '--seed', '777', '--config', 'config/models/dualtower_ft_lte.yaml']' returned non-zero exit status 1."
+      },
+      {
+        "seed": 9999,
+        "status": "failed",
+        "exit_code": 1,
+        "error": "Command '['/home/lab/miniconda3/bin/python', 'run_unified_train.py', '--model', 'dualtower_ft', '--seed', '9999', '--config', 'config/models/dualtower_ft_lte.yaml']' returned non-zero exit status 1."
+      },
+      {
+        "seed": 12345,
+        "status": "failed",
+        "exit_code": 1,
+        "error": "Command '['/home/lab/miniconda3/bin/python', 'run_unified_train.py', '--model', 'dualtower_ft', '--seed', '12345', '--config', 'config/models/dualtower_ft_lte.yaml']' returned non-zero exit status 1."
+      }
+    ]
+  }
+}

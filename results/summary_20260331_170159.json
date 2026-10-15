@@ -1,0 +1,43 @@
+{
+  "models": [
+    "dualtower_ft_ma"
+  ],
+  "seeds": [
+    42,
+    2024,
+    777,
+    9999,
+    12345
+  ],
+  "n_runs_per_model": 5,
+  "timestamp": "2026-03-31T17:01:59.369637",
+  "results": {
+    "dualtower_ft_ma": [
+      {
+        "seed": 42,
+        "status": "success",
+        "exit_code": 0
+      },
+      {
+        "seed": 2024,
+        "status": "success",
+        "exit_code": 0
+      },
+      {
+        "seed": 777,
+        "status": "success",
+        "exit_code": 0
+      },
+      {
+        "seed": 9999,
+        "status": "success",
+        "exit_code": 0
+      },
+      {
+        "seed": 12345,
+        "status": "success",
+        "exit_code": 0
+      }
+    ]
+  }
+}

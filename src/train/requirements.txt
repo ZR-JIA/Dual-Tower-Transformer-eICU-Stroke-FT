@@ -1,0 +1,110 @@
+# ============================================================================
+# ProjectStroke Training Environment - Requirements
+# ============================================================================
+# Generated: 2026-02-06
+# Python: >=3.10
+# Purpose: Dependencies for stroke mortality prediction model training
+#
+# Installation:
+#   pip install -r requirements.txt
+#
+# Or with make:
+#   make install
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Core Computation Libraries
+# ----------------------------------------------------------------------------
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<3.0.0
+scipy>=1.10.0
+
+# ----------------------------------------------------------------------------
+# Deep Learning Framework
+# ----------------------------------------------------------------------------
+# PyTorch (CPU version - for GPU, see instructions below)
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# For GPU support (CUDA 11.8), replace above with:
+# torch>=2.0.0
+# torchvision>=0.15.0
+# torchaudio>=2.0.0
+# --extra-index-url https://download.pytorch.org/whl/cu118
+
+# ----------------------------------------------------------------------------
+# Machine Learning Libraries
+# ----------------------------------------------------------------------------
+scikit-learn>=1.3.0
+xgboost>=1.7.0
+lightgbm>=4.0.0
+
+# ----------------------------------------------------------------------------
+# Hyperparameter Optimization
+# ----------------------------------------------------------------------------
+optuna>=3.0.0
+
+# ----------------------------------------------------------------------------
+# Configuration & Utilities
+# ----------------------------------------------------------------------------
+pyyaml>=6.0
+tqdm>=4.66.0
+colorlog>=6.7.0
+joblib>=1.3.0
+
+# ----------------------------------------------------------------------------
+# Visualization & Analysis
+# ----------------------------------------------------------------------------
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# ----------------------------------------------------------------------------
+# Model Export & Deployment
+# ----------------------------------------------------------------------------
+onnx>=1.14.0
+onnxruntime>=1.15.0
+
+# ----------------------------------------------------------------------------
+# Testing & Quality
+# ----------------------------------------------------------------------------
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# ----------------------------------------------------------------------------
+# Development Tools (Optional)
+# ----------------------------------------------------------------------------
+# ipython>=8.12.0
+# jupyter>=1.0.0
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.4.0
+
+# ============================================================================
+# GPU Installation Notes
+# ============================================================================
+#
+# For NVIDIA GPU with CUDA 11.8:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+# For NVIDIA GPU with CUDA 12.1:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+#
+# For AMD ROCm:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6
+#
+# For Apple Silicon (M1/M2):
+#   # PyTorch with Metal Performance Shaders (MPS) support is included by default
+#   pip install torch torchvision torchaudio
+#
+# ============================================================================
+# Minimal Installation (for structure validation only)
+# ============================================================================
+#
+# If you only need to run system_check.py (no training):
+#   pip install pyyaml
+#
+# This allows structure validation without heavy ML dependencies
+#
+# ============================================================================

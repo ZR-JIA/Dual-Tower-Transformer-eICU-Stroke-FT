@@ -1,0 +1,108 @@
+# ==============================================================================
+# DualTower-FT with Focal Loss (DT-FT-FL)
+# ==============================================================================
+# Base: dualtower_ft.yaml (FT-Transformer CLS right tower)
+# Change: loss.type bce → focal
+#
+# Motivation:
+#   BCE + pos_weight upweights ALL positive samples equally.
+#   XGBoost's gradient boosting iteratively focuses each new tree on the
+#   samples the current model gets wrong (hard examples). Focal Loss
+#   approximates this: FL(p) = -α(1-p)^γ log(p) down-weights easy examples
+#   by (1-p)^γ, forcing the model to focus on hard borderline cases where
+#   XGBoost typically gains its advantage over standard BCE-trained DL models.
+#
+# Reference:
+#   Lin et al. (2017). Focal Loss for Dense Object Detection. ICCV.
+#   DOI: 10.1109/ICCV.2017.324
+#
+# Ablation chain:
+#   DT (mean pool) → DT-FT (+ CLS) → DT-FT-FL (+ focal loss)
+#
+# All hyperparameters other than loss.type are identical to dualtower_ft.yaml
+# ==============================================================================
+
+model_config:
+  model: dualtower_ft
+
+  # Architecture (unchanged from dualtower_ft.yaml)
+  architecture:
+    trans_d_model: 64
+    trans_nhead: 4
+    trans_num_layers: 2
+
+    cat_features:
+      - name: age
+        index: 1
+        num_classes: 150
+        emb_dim: 16
+      - name: gender
+        index: 2
+        num_classes: 10
+        emb_dim: 2
+      - name: ethnicity
+        index: 3
+        num_classes: 50
+        emb_dim: 4
+
+    fusion_hidden_dim: 64
+    dropout: 0.15
+
+  # Loss function — KEY CHANGE: focal instead of bce
+  loss:
+    type: focal           # ← changed from bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25         # weight for positive class
+      gamma: 2.0          # focusing parameter; (1-p)^2 for hard examples
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer (unchanged)
+  optimizer:
+    name: adamw
+    lr: 5e-4
+    weight_decay: 3e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Scheduler (unchanged)
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop (unchanged)
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Initialization (unchanged)
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration (unchanged)
+  calibration_after_fit: true
+
+  # Early stopping (unchanged)
+  early_stopping:
+    enabled: true
+    rounds: 50

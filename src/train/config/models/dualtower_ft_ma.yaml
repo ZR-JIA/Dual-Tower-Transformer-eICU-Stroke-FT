@@ -1,0 +1,112 @@
+# ==============================================================================
+# DualTower FT-Transformer — MIMIC-Adapted (DT-FT-MA)
+# ==============================================================================
+# Based on dualtower_ft.yaml with three architectural fixes for cross-dataset
+# transfer learning:
+#
+#   1. site_id DROPPED (via 01_data.yaml drop_cols) — confounding hospital ID
+#   2. source_mimic added to Left Tower as domain embedding (num_classes=2)
+#   3. Categorical columns excluded from StandardScaler (via no_scale_cols)
+#      so Left Tower embeddings receive raw integer indices
+#   4. Age kept in Right Tower as numerical (ordinal, too important to lose)
+#
+# Left Tower:  Categorical embeddings (Gender, Ethnicity, source_mimic)
+# Right Tower: FT-Transformer style — [CLS] token aggregation, FFN 4×
+#              Receives age + all numerical features (91 features)
+# Fusion:      Concatenation + MLP
+#
+# Column indices (after dropping patient_id, hospital_id, unit_id, site_id, mortality):
+#   age=0, gender=1, ethnicity=2, ..., source_mimic=93  (94 features total)
+#   cat_features: gender=1, ethnicity=2, source_mimic=93
+#   num_indices:  [0, 3, 4, ..., 92] = 91 features (includes age)
+# ==============================================================================
+
+model_config:
+  model: dualtower_ft_ma
+
+  # Architecture
+  architecture:
+    # Right Tower: FT-Transformer (CLS token, FFN 4x)
+    trans_d_model: 64
+    trans_nhead: 4
+    trans_num_layers: 2
+
+    # Left Tower: Categorical Embeddings + Domain Embedding
+    # Note: age is intentionally NOT here — it stays in the right tower
+    # as a numerical feature (ordinal, strongest predictor)
+    cat_features:
+      - name: gender
+        index: 1
+        num_classes: 10
+        emb_dim: 2
+      - name: ethnicity
+        index: 2
+        num_classes: 50
+        emb_dim: 4
+      - name: source_mimic
+        index: 94
+        num_classes: 2
+        emb_dim: 8
+
+    # Fusion Layer
+    fusion_hidden_dim: 64
+    dropout: 0.15
+
+  # Loss function
+  loss:
+    type: bce
+    pos_weight: "${class_imbalance.pos_weight}"
+
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+
+    label_smoothing:
+      smoothing: 0.1
+
+  # Optimizer
+  optimizer:
+    name: adamw
+    lr: 5e-4
+    weight_decay: 3e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  # Learning rate scheduler
+  scheduler:
+    name: cosine
+    warmup_epochs: 5
+
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+
+    step:
+      step_size: 30
+      gamma: 0.1
+
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+
+  # Training loop
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1
+
+  # Model initialization
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+
+  # Calibration post-training
+  calibration_after_fit: true
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    rounds: 50

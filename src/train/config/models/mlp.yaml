@@ -1,0 +1,87 @@
+# ==============================================================================
+# MLP (Multi-Layer Perceptron)
+# ==============================================================================
+
+model_config:
+  model: mlp
+  
+  # Architecture
+  architecture:
+    hidden_dims: [256, 128, 64]    # Hidden layer dimensions
+    dropout: 0.2                    # Dropout rate
+    batch_norm: true                # Use batch normalization
+    activation: relu                # relu, gelu, silu, tanh
+    final_activation: null          # No activation before loss (using logits)
+  
+  # Loss function
+  loss:
+    type: bce                       # bce, focal, label_smoothing
+    pos_weight: "${class_imbalance.pos_weight}"
+    
+    # Focal loss parameters (if type=focal)
+    focal:
+      alpha: 0.25
+      gamma: 2.0
+    
+    # Label smoothing (if type=label_smoothing)
+    label_smoothing:
+      smoothing: 0.1
+  
+  # Optimizer
+  optimizer:
+    name: adamw
+    lr: 1e-3
+    weight_decay: 1e-4
+    betas: [0.9, 0.999]
+    eps: 1e-8
+  
+  # Learning rate scheduler
+  scheduler:
+    name: cosine                    # cosine, step, plateau, exponential, onecycle
+    warmup_epochs: 3
+    
+    # Cosine annealing parameters
+    cosine:
+      T_max: "${train.training.max_epochs}"
+      eta_min: 1e-6
+    
+    # Step LR parameters
+    step:
+      step_size: 30
+      gamma: 0.1
+    
+    # ReduceLROnPlateau parameters
+    plateau:
+      mode: max
+      factor: 0.5
+      patience: 5
+      threshold: 1e-4
+      min_lr: 1e-6
+  
+  # Training loop specifics
+  train_loop:
+    batch_size: 512
+    grad_clip_norm: 1.0
+    accumulate_grad_batches: 1      # Gradient accumulation
+  
+  # Regularization
+  regularization:
+    l1_lambda: 0.0
+    l2_lambda: 0.0                  # Additional L2 beyond weight_decay
+    dropout_schedule:
+      enabled: false
+      initial: 0.2
+      final: 0.1
+  
+  # Model initialization
+  initialization:
+    method: xavier_uniform
+    gain: 1.0
+  
+  # Calibration post-training
+  calibration_after_fit: true
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    rounds: 50

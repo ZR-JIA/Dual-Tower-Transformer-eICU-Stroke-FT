@@ -1,0 +1,51 @@
+# ==============================================================================
+# Random Forest
+# ==============================================================================
+
+model_config:
+  model: random_forest
+  
+  # Core parameters
+  params:
+    # Trees
+    n_estimators: 1000
+    max_depth: null                   # Grow trees to maximum depth
+    min_samples_split: 2
+    min_samples_leaf: 5
+    max_features: sqrt                # sqrt, log2, or float/int
+    
+    # Sampling
+    max_samples: null                 # Use all samples (or float for fraction)
+    bootstrap: true
+    oob_score: true                   # Out-of-bag score
+    
+    # Class imbalance
+    class_weight: "${class_imbalance.class_weight}"
+    
+    # Performance
+    n_jobs: -1
+    random_state: "${reproducibility.seed}"
+    verbose: 0
+    warm_start: false
+    
+    # Criterion
+    criterion: gini                   # gini or entropy
+    
+    # Pruning
+    min_impurity_decrease: 0.0
+    ccp_alpha: 0.0                    # Complexity pruning parameter
+  
+  # Feature importance
+  feature_importance:
+    type: impurity                    # Options: impurity, permutation
+  
+  # Model-specific training settings
+  train_loop:
+    batch_size: null                  # Not used for Random Forest
+  
+  # Calibration
+  calibration_after_fit: true
+  
+  # Early stopping (not applicable to Random Forest)
+  early_stopping:
+    enabled: false
