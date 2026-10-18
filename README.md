@@ -571,11 +571,14 @@ All four injection conditions target numerical columns
 
 **2. Prior-work baselines (Fig. 2, Table 1).**
 The Dual-Tower Transformer and DT-MLP rows in Table 1, and all baselines
-in Fig. 2, are taken from our CCAI 2026 paper, which used an earlier
-97-feature cohort. They were not retrained on the present 94-feature
-cohort. The differences against DualTower-FT (e.g., −0.76 pp AUPRC and
-the cross-seed SD comparison) are therefore observed differences, not
-controlled ablations.
+in Fig. 2, are taken from our CCAI 2026 paper and were not retrained with
+this codebase. Those experiments used the same split sizes (test N = 2,238,
+314 deaths) and the same 94 input features. The CCAI paper reported 97
+features by counting the three categorical columns twice, so the statements
+in this paper that the prior cohort had 97 features (Fig. 2 caption) or
+differed by three features (Section 3.1) are incorrect. The differences
+against DualTower-FT (e.g., −0.76 pp AUPRC and the cross-seed SD comparison)
+come from separate training runs, not from a controlled ablation.
 
 **3. MIMIC-IV transfer (Section 4.4, Table 3).**
 DT-FT-MA trained on eICU only is an architecture-matched control: it uses
@@ -584,6 +587,11 @@ indices; see the DT-FT-MA section below) but sees no MIMIC-IV data. The table th
 contains three transfer strategies and one control. The observed difference
 between DT-FT-MA (2-stage) and this control is −0.14 pp AUPRC, smaller
 than the cross-seed SD; it is not a confirmed transfer effect.
+The MIMIC-IV rows also have encoding defects from the preprocessing
+pipeline: the gender, ethnicity, age and `site_id` codes differ from eICU
+(see [Known issues](https://github.com/ZR-JIA/Data-Preprocessing-for-MIMIC#known-issues)).
+These may contribute to the negative result; their effect has not been
+quantified.
 
 **4. Decision threshold for F1.**
 Not reported in the paper. For each seed, the threshold is selected on the
@@ -608,6 +616,11 @@ threshold is not F1-optimised.
 - In the DT-FT configs, the `cat_features` names read age/gender/ethnicity,
   but the model selects columns by `index`; indices 1–3 are gender,
   ethnicity and site_id, as Section 3.1 states. The names are labels only.
+- Section 3.1 states that the ±10 clamp replaces the fixed 99th-percentile
+  cap. The earlier cap was implemented but disabled, so no cap was active
+  before.
+- "Age 0–75" in Section 3.1 is the range of the label-encoded age index,
+  not age in years.
 
 ### Ablation Study (5-seed mean ± std, AUPRC primary metric)
 
@@ -740,8 +753,9 @@ regularization (dropout 0.15 → 0.075). Width does not help on this dataset siz
 
 **Change**: Add cross-attention from right-tower numerical tokens to left-tower
 demographic embeddings within each Transformer layer (DT-FT + DCNA).
-Motivation: allow NIHSS/GCS to be interpreted in the context of age/gender,
-replicating tree-model conditional splits in continuous attention form.
+Motivation: allow numerical features to be interpreted in the context of the
+demographic embeddings, replicating tree-model conditional splits in continuous
+attention form. (NIHSS and GCS are not in the feature set.)
 
 **Result**: AUPRC 0.6196 ± 0.0061 (−0.49pp vs DT-FT, std regressed to 0.0058).
 
