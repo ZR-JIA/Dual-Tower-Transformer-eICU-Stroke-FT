@@ -211,6 +211,7 @@ Thumbs.db
 
 # --- PDF files (papers, reports — do not commit to code repo) ---
 *.pdf
+!poster/PRICAI2026_DualTowerFT_60x100cm.pdf
 
 # --- Internal planning / scratch docs ---
 github.md

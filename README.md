@@ -24,6 +24,14 @@ Multi-center ICU electronic health records are noisy, and deep tabular models tr
 
 ---
 
+## Poster
+
+<a href="poster/PRICAI2026_DualTowerFT_60x100cm.pdf"><img src="poster/poster_preview.png" alt="PRICAI 2026 poster" width="600"></a>
+
+PRICAI 2026 poster, 60 × 100 cm ([PDF](poster/PRICAI2026_DualTowerFT_60x100cm.pdf)).
+
+---
+
 ## Key Features
 
 - **Dual-Tower Architecture** — Decoupled processing of categorical demographics (Left Tower: learnable embeddings) and numerical vitals (Right Tower: configurable MLP or Transformer encoder)
@@ -250,6 +258,7 @@ Dual-Tower-Transformer-eICU-Stroke-FT/
 │   ├── experiments/                    # Per-run experiment artifacts
 │   ├── final/                          # Promoted best models
 │   └── optuna/                         # Hyperparameter search results
+├── poster/                             # PRICAI 2026 poster (PDF and preview image)
 ├── results/                            # Aggregated results behind the reported numbers (no patient-level data)
 └── src/
     └── train/
